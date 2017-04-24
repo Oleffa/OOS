@@ -1,0 +1,8 @@
+#########################TODO##############################
+- comment everything and go through:
+	- makefile
+	- linker
+	- start
+- fix the kerlen print method
+	- add scroll support
+	- add new line support (and maybe other symbols)
