@@ -5,8 +5,8 @@ CC = gcc
 LD = ld
 
 ASFLAGS = -m32
-CFLAGS = -m32 -Wall -g -fno-stack-protector -nostdinc
-LDFLAGS = -melf_i386 -Ttext=0x100000
+CFLAGS = -m32 -Wall -g -fno-stack-protector -I include
+LDFLAGS = -melf_i386 -Tkernel.ld
 
 kernel: $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
