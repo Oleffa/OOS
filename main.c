@@ -25,7 +25,17 @@ unsigned short *memset_short(unsigned short *dest, unsigned short val, int count
 void outportb(unsigned short _port, unsigned char _data){
 	__asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
 }
+
+unsigned char *kmemcopy(unsigned char *dest, const unsigned char *src, int count){
+	int i;
+	char* d = (char*) dest;
+	char* s = (char*) src;
+	for(i = 0; i < count; i++){
+		*s++ = *d++;
+	}	
+	return(dest);
+}
+
 void main(){
-//	displaycursor(1,1);
 	for(;;);
 }

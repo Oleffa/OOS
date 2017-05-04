@@ -26,18 +26,19 @@ _start:
     call init
  
     // Falls wir jemals aus init zurueckkommen sollten, sperren wir die Interrupts und
-    // halten einfach den Prozessor an. (man braucht ihn ja nicht unnötig heißlaufen lassen.)
-//_stop:
-//    cli
-//    hlt
- 
-    // Sollte es doch weitergehen, probieren wir erneut die CPU schlafen zu lassen
-//    jmp _stop
-
-//Eigener Code: Für consolen output
-//FAlls wir aus der init zurueckkommen gehen wir in eine endlosschleife
+   
+//Call the main method
+//extern _main
+call main
+//Endless loop if we return from main
 jmp .
- 
+//This would stop the kernel
+//jmp _stop
+// halten einfach den Prozessor an. (man braucht ihn ja nicht unnötig heißlaufen lassen.)
+_stop:
+    cli
+    hlt
+
 // 8 kB Stack fuer den Kernel. Das Label steht hinter dem freien Speicher,
 // weil der Stack nach unten waechst
 .section .bss

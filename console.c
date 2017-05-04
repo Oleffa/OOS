@@ -1,75 +1,70 @@
 #include "include/stdarg.h"
 #include "include/console.h"
+#include "include/system.h"
+#include <string.h>
 
-static int x = 0;
-static int y = 0;
-char* video = (char*) 0xb8000;
-uint8_t color = 0x1;
+int x = 5;
+int y = 5;
+unsigned short *video = (unsigned short*) 0xb8000;
+int text = 0x0F;
 
-void kclear(void){
+void cursor(){
+	unsigned temp;
+	temp = y * 80 + x;
+	outportb(0x3D4, 14);
+	outportb(0x3D5, temp >> 8);
+	outportb(0x3D4, 15);
+	outportb(0x3D5, temp);
+}
+void kclear(){
+	unsigned blank = 0x20 | (0x0F << 8);
 	int t;
-	for (t = 0; t < 2 * 25 * 80; t++) {
-		video[t] = 0;
+	for(t = 0; t < 2 * 25 * 80; t++){
+		video[t] = blank;
 	}
 	x = y = 0;
+	cursor();
 }
-static void kprintchar(uint8_t c, uint8_t color, uint8_t x, uint8_t y){
-	//calculate adress
-	uint16_t* off = (uint16_t*)0xB8000;
-	off += y * 80 + x;
-	*off = (((uint16_t)color) << 8) | c;
+void scroll(int lines){
+	unsigned blank;
+
+	blank = 0x20 | (text << 8);
+	kmemcopy(video, video + lines * 80, (25 - lines) * 80 * 2);
+	memset_short(video + (25 - lines) * 80, blank, 80);
+	y = 25 - lines;
+	x = 0;
 }
-//static void kprintchar_16(uint16_t symbol, uint8_t x, uint8_t y){
-//	uint16_t* off = (uint16_t*)0xB8000;
-//	off += y * 80 + x;
-//	*off = symbol;
-//}
-static char getChar(uint8_t x, uint8_t y){
-	uint16_t off = (uint16_t)0xB8000;
-	char ret;
-	off += y * 80 + x;
-	off *= 2;
-	ret = (char)(off & 0xFF);
-	return ret;
-}
-void scrollUP(int lines){
-	int z;
-	int u;
-	int v;
-	for(z = 0; z < 25; z++){
-		for(u = 0; u < 80; u++){
-			kprintchar(getChar(u,z+1), color, u, z);
-		}
+
+void kprintchar(unsigned char c){
+	unsigned short *where;
+	unsigned att = text << 8;
+	if(c == '\n'){
+		x = 0;
+		y++;
+	}else if(c >= ' '){
+		where = video + (y * 80 + x);
+		*where = c | att;
+		x++;
 	}
-	for(v = 0; v < 80; v++){
-		kprintchar(' ', color, v, 24);
-	}
-}
-static void updateXY(int x_update, int y_update){
-//	uint16_t tmp;
-	//updating the position of the cursor and going into next line or scroll mode
-	x = x + x_update;
-	y = y + y_update;
+	//go to next line when line is finished
 	if(x >= 80){
 		x = 0;
-		y = y + 1;
+		y++;
 	}
 	if(y >= 25){
-		y = 24;
-		scrollUP(1);
+		scroll(1);
 	}
-	//display the cursor
-	//TODO
-	//tmp = y * 25 * x;
-	//outb(0x3D4,14);
-	//outb(0x3D5,tmp >> 8);
-//	outb(0x3D4,15);
-//	outb(0x3D5,tmp);
+	cursor();
 }
-void kprintf(const char* ch){
+void settextattributes(unsigned char text, unsigned char background){
+	text = (background << 4) | (text & 0x0F);
+}
+void kprintf(const char *ch){
 	while(*ch){
-		kprintchar(*ch, color, x, 10);
-		updateXY(1,0);
+		kprintchar(*ch);
 		ch++;
+	}
+	if(*ch != '\n'){
+		kprintchar('\n');
 	}
 }
