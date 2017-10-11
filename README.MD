@@ -19,6 +19,6 @@
   - add support for all symbols in terminal
 
 ## Used Tutorials:
-lowlevel.eu:              http://www.lowlevel.eu/wiki/Teil_4_-_Hello_World
-osdev.org:                http://wiki.osdev.org/Tutorials
-brans kernel tutorial:    http://www.osdever.net/tutorials/view/brans-kernel-development-tutorial
+- lowlevel.eu:              http://www.lowlevel.eu/wiki/Teil_4_-_Hello_World
+- osdev.org:                http://wiki.osdev.org/Tutorials
+- brans kernel tutorial:    http://www.osdever.net/tutorials/view/brans-kernel-development-tutorial
