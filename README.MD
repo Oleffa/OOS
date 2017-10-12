@@ -2,7 +2,7 @@
 
 ## Features:
 
-- booting kernel in qemu
+- booting kernel in qemu or using grub
   - kernel print method to output text to screen/in video buffer
 - global descriptor table
 - interrupt descriptor table
