@@ -8,6 +8,7 @@
 - interrupt descriptor table
 
 ## TODO:
+  - proper build/installation guide
   - interrupts and the interrupt service routines (isrs), http://wiki.osdev.org/ISRs_PIC_And_Multitasking, http://www.osdever.net/tutorials/view/brans-kernel-development-tutorial
   - comment everything and go through:
     - makefile
