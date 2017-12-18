@@ -22,8 +22,15 @@ unsigned short *memset_short(unsigned short *dest, unsigned short val, int count
 	}
 	return(dest);
 }
+/*used to write to I/O ports by sending bytes to the devices, used for changing textmode cursor postition */
 void outportb(unsigned short _port, unsigned char _data){
 	__asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
+}
+/*used to read from I/O prots to get data from devices like keyboard*/
+unsigned char inportb(unsigned short _port){
+	unsigned char rv;
+	__asm__ __volatile__ ("inb %1, %0" : "=a" (rv) : "dN" (_port));
+	return rv;
 }
 
 unsigned char *kmemcopy(unsigned char *dest, const unsigned char *src, int count){
@@ -35,7 +42,7 @@ unsigned char *kmemcopy(unsigned char *dest, const unsigned char *src, int count
 	}	
 	return(dest);
 }
-
+/*idle loop in main method*/
 void main(){
 	for(;;);
 }

@@ -27,7 +27,6 @@ static void load_gdt(){
 	asm volatile("lgdt %0" : : "m" (gdtp));
 	asm volatile("mov $0x10, %%ax;mov %%ax, %%ds;mov %%ax, %%es;mov %%ax, %%fs;mov %%ax, %%gs;mov %%ax, %%ss;" : : );
 	asm volatile("ljmp $0x8, $.1;.1:;" : : );
-	kprintf("loading gdt...");
 }
 
 static void set_entry(int i, unsigned int base, unsigned int limit, int flags){
@@ -49,7 +48,7 @@ void init_gdt(void){
     set_entry(4, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT |
         GDT_FLAG_DATASEG | GDT_FLAG_4K_GRAN | GDT_FLAG_PRESENT | GDT_FLAG_RING3);
 
-
+	kprintf("loading gdt...");
 	load_gdt();
 	kprintf("success!");
 }

@@ -2,6 +2,7 @@
 #include "include/gdt.h"
 #include "include/idt.h"
 #include "include/system.h"
+#include "include/keyboard.h"
 #include <stdio.h>
 void init(void)
 {
@@ -9,7 +10,9 @@ void init(void)
 	settextattributes(0xF, 0x0);
 	init_gdt();
 	init_idt();
+	init_keyboard();
 	kprintf("init done!");
+
 	//asm volatile("int $0x0");
 //	int i = 0;
 //	kprintf("Hello");
