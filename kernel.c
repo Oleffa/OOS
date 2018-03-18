@@ -57,24 +57,28 @@ void outportb (unsigned short _port, unsigned char _data)
 }
 
 void test_stuff() {
-	k_printf("Entering test mode!");
+	k_printf("\nEntering test mode!\n");
+
+	k_printf("dividing by 0 what could go wrong...\n");
+	int x = 10/0;
+	k_printf("I guess it worked....\n");
 //	for (int j = 0; j < 26; j++){
 //		k_printf("0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29x");
 //	}
-	k_printf("test");
-	k_printf("test");
-	k_printf("0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,2x"); 
+//	k_printf("0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29x");
+	k_printf("Falling back to idle mode..."); 
 }
 
-/* This is a very simple main() function. All it does is sit in an
-*  infinite loop. This will be like our 'idle' loop */
+/* Executes stuff and then goes into idle mode */
 void main()
 {
-    /* You would add commands after here */
-	init_video();
 	gdt_install();
+	init_video();
+	k_printf("Welcome to Oliver's Operating System\n\n");
+	k_printf("Initializing Kernel:\n\n");
+	//gdt_install();
+	idt_install();
+	isrs_install();
 	test_stuff();
-   /* ...and leave this loop in. There is an endless loop in
-    *  'start.asm' also, if you accidentally delete this next line */
-    for (;;);
+	for (;;);
 }

@@ -13,10 +13,10 @@ CFLAGS = -std=gnu99 -ffreestanding -g -c -I include
 LDFLAGS = -ffreestanding -nostdlib -g -T linker.ld
 
 
-all: start kernel console gdt link clean
+all: start kernel console gdt idt isrs link clean
 
 start:
-	$(CC) $(CFLAGS) start.s -o start.o
+	$(CC) $(CFLAGS) start.S -o start.o
 
 kernel:
 	$(CC) $(CFLAGS) kernel.c -o kernel.o
@@ -27,9 +27,14 @@ console:
 gdt:
 	$(CC) $(CFLAGS) gdt.c -o gdt.o
 
+idt:
+	$(CC) $(CFLAGS) idt.c -o idt.o
+
+isrs:
+	$(CC) $(CFLAGS) isrs.c -o isrs.o
+
 link:
-	$(CC) $(LDFLAGS) start.o kernel.o console.o gdt.o -o mykernel.elf -lgcc
+	$(CC) $(LDFLAGS) start.o kernel.o console.o gdt.o idt.o isrs.o -o mykernel.elf -lgcc
 
 clean:
-	@echo $("hi")
 	rm $(OBJS)
