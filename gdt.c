@@ -1,56 +1,83 @@
-#include "include/console.h"
-#include "include/gdt.h"
-#define GDT_FLAG_DATASEG	0x02
-#define GDT_FLAG_CODESEG	0x0a
-#define GDT_FLAG_TSS		0x09
+#include <system.h>
 
-#define GDT_FLAG_SEGMENT	0x10
-#define GDT_FLAG_RING0		0x00
-#define GDT_FLAG_RING3		0x60
-#define GDT_FLAG_PRESENT	0x80
+/* Defines a GDT entry. We say packed, because it prevents the
+*  compiler from doing things that it thinks is best: Prevent
+*  compiler "optimization" by packing */
+struct gdt_entry
+{
+    unsigned short limit_low;
+    unsigned short base_low;
+    unsigned char base_middle;
+    unsigned char access;
+    unsigned char granularity;
+    unsigned char base_high;
+} __attribute__((packed));
 
-#define GDT_FLAG_4K_GRAN	0x800
-#define GDT_FLAG_32_BIT		0x400
+/* Special pointer which includes the limit: The max bytes
+*  taken up by the GDT, minus 1. Again, this NEEDS to be packed */
+struct gdt_ptr
+{
+    unsigned short limit;
+    void* base;
+} __attribute__((packed));
 
-#define GDT_ENTRIES 5
-static uint64_t gdt[GDT_ENTRIES]
-;
-struct{
-	uint16_t limit;
-	void* pointer;
-} __attribute__((packed)) gdtp = {
-	.limit = GDT_ENTRIES * 8 -1,
-	.pointer = gdt,
-};
+/* Our GDT, with 3 entries, and finally our special GDT pointer */
+struct gdt_entry gdt[3];
+struct gdt_ptr gp;
 
-static void load_gdt(){
-	asm volatile("lgdt %0" : : "m" (gdtp));
+/* This will be a function in start.asm. We use this to properly
+*  reload the new segment registers */
+void gdt_flush()
+{
+	asm volatile("lgdt %0" : : "m" (gp));
 	asm volatile("mov $0x10, %%ax;mov %%ax, %%ds;mov %%ax, %%es;mov %%ax, %%fs;mov %%ax, %%gs;mov %%ax, %%ss;" : : );
 	asm volatile("ljmp $0x8, $.1;.1:;" : : );
 }
+/* Setup a descriptor in the Global Descriptor Table */
+void gdt_set_gate(int num, unsigned long base, unsigned long limit, unsigned char access, unsigned char gran)
+{
+    /* Setup the descriptor base address */
+    gdt[num].base_low = (base & 0xFFFF);
+    gdt[num].base_middle = (base >> 16) & 0xFF;
+    gdt[num].base_high = (base >> 24) & 0xFF;
 
-static void set_entry(int i, unsigned int base, unsigned int limit, int flags){
-	gdt[i] = limit & 0xffffLL;
-	gdt[i] |= (base & 0xffffffLL) << 16 ;
-	gdt[i] |= (flags & 0xffLL) << 40;
-	gdt[i] |= ((limit >> 16) & 0xfLL) << 48;
-	gdt[i] |= ((flags >> 8) & 0xffLL) << 52;
-	gdt[i] |= ((base >> 24) & 0xffLL) << 56;
-}	
+    /* Setup the descriptor limits */
+    gdt[num].limit_low = (limit & 0xFFFF);
+    gdt[num].granularity = ((limit >> 16) & 0x0F);
 
-void init_gdt(void){
-	set_entry(1, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT |
-        GDT_FLAG_CODESEG | GDT_FLAG_4K_GRAN | GDT_FLAG_PRESENT);
-    set_entry(2, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT |
-        GDT_FLAG_DATASEG | GDT_FLAG_4K_GRAN | GDT_FLAG_PRESENT);
-    set_entry(3, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT |
-        GDT_FLAG_CODESEG | GDT_FLAG_4K_GRAN | GDT_FLAG_PRESENT | GDT_FLAG_RING3);
-    set_entry(4, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT |
-        GDT_FLAG_DATASEG | GDT_FLAG_4K_GRAN | GDT_FLAG_PRESENT | GDT_FLAG_RING3);
-
-	kprintf("loading gdt...");
-	load_gdt();
-	kprintf("success!");
+    /* Finally, set up the granularity and access flags */
+    gdt[num].granularity |= (gran & 0xF0);
+    gdt[num].access = access;
 }
 
+/* Should be called by main. This will setup the special GDT
+*  pointer, set up the first 3 entries in our GDT, and then
+*  finally call gdt_flush() in our assembler file in order
+*  to tell the processor where the new GDT is and update the
+*  new segment registers */
+void gdt_install()
+{	
+	k_printf("GDT: install...\n");
+    /* Setup the GDT pointer and limit */
+    gp.limit = (sizeof(struct gdt_entry) * 3) - 1;
+    gp.base = gdt;
 
+    /* Our NULL descriptor */
+    gdt_set_gate(0, 0, 0, 0, 0);
+
+    /* The second entry is our Code Segment. The base address
+    *  is 0, the limit is 4GBytes, it uses 4KByte granularity,
+    *  uses 32-bit opcodes, and is a Code Segment descriptor.
+    *  Please check the table above in the tutorial in order
+    *  to see exactly what each value means */
+    gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
+
+    /* The third entry is our Data Segment. It's EXACTLY the
+    *  same as our code segment, but the descriptor type in
+    *  this entry's access byte says it's a Data Segment */
+    gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
+
+    /* Flush out the old GDT and install the new changes! */
+    gdt_flush();
+    k_printf("GDT: success\n");
+}
