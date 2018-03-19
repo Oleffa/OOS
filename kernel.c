@@ -43,7 +43,7 @@ int strlen(const char *str)
 unsigned char inportb (unsigned short _port)
 {
     unsigned char rv;
-    __asm__ __volatile__ ("inb %1, %0" : "=a" (rv) : "dN" (_port));
+    asm volatile ("inb %1, %0" : "=a" (rv) : "dN" (_port));
     return rv;
 }
 
@@ -53,7 +53,8 @@ unsigned char inportb (unsigned short _port)
 *  cannot be done in C */
 void outportb (unsigned short _port, unsigned char _data)
 {
-    __asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
+//    asm volatile ("outb %1, %0" : : "dN" (_port), "a" (_data));
+	asm volatile("outb %0, %1" : : "a" (_data), "Nd" (_port));
 }
 
 void test_stuff() {
@@ -66,19 +67,28 @@ void test_stuff() {
 //		k_printf("0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29x");
 //	}
 //	k_printf("0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29x");
-	k_printf("Falling back to idle mode..."); 
 }
-
 /* Executes stuff and then goes into idle mode */
 void main()
 {
-	gdt_install();
+//	gdt_install();
 	init_video();
 	k_printf("Welcome to Oliver's Operating System\n\n");
 	k_printf("Initializing Kernel:\n\n");
-	//gdt_install();
+	gdt_install();
 	idt_install();
 	isrs_install();
-	test_stuff();
-	for (;;);
+	irq_install();
+	//enable hw interrupts
+	__asm__ __volatile__ ("sti");
+
+	__asm__ __volatile__ ("int $0");
+
+	k_printf("======================================");
+
+	timer_install();
+
+//	test_stuff();
+	k_printf("Falling back to idle...\n");
+//	for (;;);
 }

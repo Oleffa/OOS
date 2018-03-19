@@ -132,8 +132,6 @@ void fault_handler(struct regs *r)
 	//go in endless loop for (;;);
 	//halt system
 	asm volatile("cli; hlt");
-    }else{
-	/* Here we will handle the hardware interrupts */
     }
 
 }

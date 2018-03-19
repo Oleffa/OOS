@@ -32,11 +32,11 @@ void idt_load()
 void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags)
 {
     /* Split base up into a high and low 16-bits, storing them in idt[num].base_hi and base_lo.*/
-	idt[num].base_lo = base>>8;	//Interrupt routine base address
+	idt[num].base_hi = (base>>16) & 0xFFFF;	//Interrupt routine base address
 	idt[num].sel = sel;		//Selector of IDT
 	idt[num].zero = 0;		
-	idt[num].flags = flags;		//Access Flags
-	idt[num].base_hi = base & 0xFF;	//Interrupt routine base address
+	idt[num].flags = flags | 0x60;		//Access Flags
+	idt[num].base_lo = (base & 0xFF);	//Interrupt routine base address
 }
 
 /* Installs the IDT */
@@ -51,6 +51,7 @@ void idt_install()
     k_memset(&idt, 0, sizeof(struct idt_entry) * 256);
 
     /* Add any new ISRs to the IDT here using idt_set_gate */
+
 
     /* Points the processor's internal register to the new IDT */
     idt_load();

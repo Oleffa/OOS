@@ -32,5 +32,3 @@
 .global isr29  // Reserved
 .global isr30  // Reserved
 .global isr31  // Reserved
-
-

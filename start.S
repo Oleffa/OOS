@@ -8,9 +8,11 @@
 //get gp from an extern file
 .extern gp
 //interrupt error codes
-.INCLUDE "error_codes.inc"
+.INCLUDE "isr_globals.inc"
+.INCLUDE "irq_globals.inc"
 .extern test_assembler_stuff
 .extern fault_handler
+.extern irq_handler
 
 
 // GRUB, needs to know some basic information about our kernel before it can boot it by using the multiboot standard
@@ -47,19 +49,19 @@
 	start:
 		// First set up a C environment. All this needs is a stack.
 		mov $stack_top, %esp // Set the stack pointer to the top of the stack
- 
 		// At this point, we can call our main C function. And we can call our C code		
 		call main
-		//why the fuck do i need this here? This code is never even executed. And Otherwise the interrupt is not processes properly...
-		//jmp isr3
-		jmp hang
+		jmp isr1
+		//jmp hang
 		// In case of an error when calling the main function in the kernel.c:
 	hang:
+		call test_assembler_stuff
 		cli      // Disable CPU interrupts
 		hlt      // Halt the CPU
 		jmp hang // If that didn't work, loop around and try again.
 		//Dividie by zero exception
 	isr0:
+		call test_assembler_stuff
 		cli
 		pushl $0 // put 0 as error code to keep all interrupts similar
 		pushl $0
@@ -237,35 +239,7 @@
 		pushl $0
 		pushl $31
 		jmp isr_common_stub
-
-	/*
-	isr_common_stub:
-		//Save CPU state
-		push %ebp
-		push %edi
-		push %esi
-		push %edx
-		push %ecx
-		push %ebx
-		push %eax
-		// Call handler
-		push %esp
-		call fault_handler
-		add $4, %esp
-		// Restore CPU state
-		pop %eax
-		pop %ebx
-		pop %ecx
-		pop %edx
-		pop %esi
-		pop %edi
-		pop %ebp
-		// Take Error code and Interrupt number from stack
-		add $8, %esp
-		// Jump back to paused code
-		iret
-	*/
-
+	// This method handles the interrupt service routine, call the fault_handler in isrs.c
 	isr_common_stub:
 		push %ebp
 		push %edi
@@ -274,22 +248,23 @@
 		push %ecx
 		push %ebx
 		push %eax
-		// Save CPU statei
-		push %ds
-		push %es
-		push %fs
-		push %gs
-		push %eax
+		// Save CPU state
+//		push %ds
+//		push %es
+//		push %fs
+//		push %gs
+//		push %eax
 		// Call handler
 		push %esp
+		call test_assembler_stuff
 		call fault_handler
 		add $4, %esp
 		// Restore CPU state
-		pop %eax
-		pop %gs
-		pop %fs
-		pop %es
-		pop %ds
+//		pop %eax
+//		pop %gs
+//		pop %fs
+//		pop %es
+//		pop %ds
 		pop %eax
 		pop %ebx
 		pop %ecx
@@ -299,38 +274,121 @@
 		pop %ebp
 		add $8, %esp
 		iret
+	// This is a stub for IRQ based ISRs. Calls irq_handler in irq.c
+	irq0:
+	    cli
+	    pushl $0
+	    pushl $32
+	    jmp irq_common_stub
+	irq1:
+	    cli
+	    pushl $0
+	    pushl $33
+	    jmp irq_common_stub
+	irq2:
+	    cli
+	    pushl $0
+	    pushl $34
+	    jmp irq_common_stub
+	irq3:
+	    cli
+	    pushl $0
+	    pushl $35
+	    jmp irq_common_stub
+	irq4:
+	    cli
+	    pushl $0
+	    pushl $36
+	    jmp irq_common_stub
+	irq5:
+	    cli
+	    pushl $0
+	    pushl $37
+	    jmp irq_common_stub
+	irq6:
+	    cli
+	    pushl $0
+	    pushl $38
+	    jmp irq_common_stub
+	
+	irq7:	
+	    cli
+	    pushl $0
+	    pushl $39
+	    jmp irq_common_stub
 
-
-/*
-	isr_common_stub:
-
-
-		pusha
-		push %ds
-		push %es
-		push %fs
-		push %gs
-
-		mov $0x10, %ax
-		mov %ds, %ax
-		mov %es, %ax
-		mov %fs, %ax
-		mov %gs, %ax
-		mov %eax, %esp
+	irq8:
+	    cli
+	    pushl $0
+	    pushl $40
+	    jmp irq_common_stub
+	irq9:
+	    cli
+	    pushl $0
+	    pushl $41
+	    jmp irq_common_stub
+	irq10:
+	    cli
+	    pushl $0
+	    pushl $42
+	    jmp irq_common_stub
+	irq11:
+	    cli
+	    pushl $0
+	    pushl $43
+	    jmp irq_common_stub
+	irq12:
+	    cli
+	    pushl $0
+	    pushl $44
+	    jmp irq_common_stub
+	irq13:
+	    cli
+	    pushl $0
+	    pushl $45
+	    jmp irq_common_stub
+	irq14:
+	    cli
+	    pushl $0
+	    pushl $46
+	    jmp irq_common_stub
+	irq15:
+	    cli
+	    pushl $0
+	    pushl $47
+	    jmp irq_common_stub
+	irq_common_stub:
+		push %ebp
+		push %edi
+		push %esi
+		push %edx
+		push %ecx
+		push %ebx
 		push %eax
-		mov fault_handler, %eax
-		call *%eax
+		// Save CPU state
+//		push %ds
+//		push %es
+//		push %fs
+//		push %gs
+//		push %eax
+		// Call handler
+		push %esp
+		call irq_handler
+		add $4, %esp
+		call test_assembler_stuff
+		// Restore CPU state
+//		pop %gs
+//		pop %fs
+//		pop %es
+//		pop %ds
 		pop %eax
-		pop %gs
-		pop %fs
-		pop %es
-		pop %ds
-		popa
-		add %esp, 8
+		pop %ebx
+		pop %ecx
+		pop %edx
+		pop %esi
+		pop %edi
+		pop %ebp
+		add $8, %esp
+		call test_assembler_stuff
 		iret
-*/
-
-
-
-
 
