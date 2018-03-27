@@ -1,46 +1,51 @@
-# SRCS are all source files that end in .c or .s
-SRCS = $(shell find -name '*.[cs]')
-# OBJS are all object files
-OBJS = $(addsuffix .o,$(basename $(SRCS)))
+BUILD=build/
 
-# Set gcc cross compiler
+KERNEL_SOURCES=$(wildcard kernel/*.c kernel/osl/*.c)
+OBJ=${KERNEL_SOURCES:.c=.o}
+
+
 CC = /home/oli/Workspace/crosscompiler/bin/i686-elf-gcc
-# Set linker
-LD = ld
+C_FLAGS=-m32 -ffreestanding -g -fno-pie
+LD_FLAGS=-melf_i386
+NASMFLAGS=-felf32
 
-# Set flags
-CFLAGS = -std=gnu99 -ffreestanding -g -c -I include
-LDFLAGS = -ffreestanding -nostdlib -g -T linker.ld
+#C_FLAGS=-ffreestanding -g
+#LD_FLAGS=-melf
+#NASMFLAGS=-felf
 
+QEMU=qemu-system-i386
 
-all: start kernel console gdt idt isrs irqs timer link clean
+all: dir kernel.bin boot.bin os-image os
 
-start:
-	$(CC) $(CFLAGS) start.S -o start.o
+run: 
+	$(QEMU) -hda ${BUILD}os.img
 
-kernel:
-	$(CC) $(CFLAGS) kernel.c -o kernel.o
+debug:
+	$(QEMU) -fda ${BUILD}os.img -gdb tcp::9999 -S
 
-console:
-	$(CC) $(CFLAGS) console.c -o console.o
+os-image:
+	cat ${BUILD}boot.bin ${BUILD}kernel.bin > ${BUILD}os-image
 
-gdt:
-	$(CC) $(CFLAGS) gdt.c -o gdt.o
+os: $(BUILD)os-image
+	dd if=/dev/zero bs=1024 count=1440 > ${BUILD}$@.img
+	dd if=$< of=${BUILD}$@.img conv=notrunc
 
-idt:
-	$(CC) $(CFLAGS) idt.c -o idt.o
+boot.bin: boot/boot.asm
+	nasm $(NASM_FLAGS) $< -f bin -I 'boot/' -o ${BUILD}$@
 
-isrs:
-	$(CC) $(CFLAGS) isrs.c -o isrs.o
+%kernel_entry.o: kernel/kernel_entry.asm
+	nasm $< $(NASMFLAGS) -o kernel/kernel_entry.o
 
-irqs: 
-	$(CC) $(CFLAGS) irq.c -o irq.o
+kernel.bin: kernel/kernel_entry.o $(OBJ)	
+	ld $(LD_FLAGS) -o ${BUILD}$@ -Ttext 0x1000 $^ --oformat binary
 
-timer:
-	$(CC) $(CFLAGS) timer.c -o timer.o
+%.o: %.c
+	$(CC) $(C_FLAGS) -c $< -o $@
 
-link:
-	$(CC) $(LDFLAGS) start.o kernel.o console.o gdt.o idt.o isrs.o irq.o timer.o -o mykernel.elf -lgcc
+dir:
+	mkdir -p $(BUILD)
 
 clean:
-	rm $(OBJS)
+	@rm -f kernel/*.o kernel/drivers/*.o
+	@rm -r $(BUILD)
+
