@@ -4,7 +4,7 @@ KERNEL_SOURCES=$(wildcard kernel/*.c kernel/osl/*.c)
 OBJ=${KERNEL_SOURCES:.c=.o}
 
 
-CC = /home/oli/Workspace/crosscompiler/bin/i686-elf-gcc
+CC = gcc
 C_FLAGS=-m32 -ffreestanding -g -fno-pie
 LD_FLAGS=-melf_i386
 NASMFLAGS=-felf32
