@@ -3,7 +3,7 @@ OOS is a hobby operating system and my first shot at OS development.
 
 It features a simple bootloader written in assembly and a basic 32-bit kernel written in C.
 
-![Screenshot] (/images/001.jpg)
+![Screenshot](/images/001.jpg)
 
 ## Features
 - Small Bootloader written in assembly
@@ -11,6 +11,11 @@ It features a simple bootloader written in assembly and a basic 32-bit kernel wr
 - Interrupt driven timer
 - Basic Keyboard input support
 - Video buffer color schemes
+
+## How to use
+- Requires QEMU, GCC (i used a cross compiler for i686-elf: https://wiki.osdev.org/GCC_Cross-Compiler), NASM
+- Run `make` to generate os.img
+- Run `make run` to run the os in QEMU
 
 ## Code
 - boot/ contains assembly code for the bootloader and Global Descriptor Table initialization
